@@ -318,6 +318,9 @@ status_t AudioPolicyManagerCustom::setDeviceConnectionStateInt(audio_devices_t d
 
     // handle input devices
     if (audio_is_input_device(deviceType)) {
+        // PICO: factory test mode headset loopback (vendor.audio.headsetloopback follows the
+        // wired headset microphone)
+        bool ftmAudio = property_get_bool("vendor.audio.ftm_aud", false);
         ssize_t index = mAvailableInputDevices.indexOf(device);
         switch (state)
         {
@@ -346,6 +349,10 @@ status_t AudioPolicyManagerCustom::setDeviceConnectionStateInt(audio_devices_t d
                 return INVALID_OPERATION;
             }
 
+            if (deviceType == AUDIO_DEVICE_IN_WIRED_HEADSET && ftmAudio) {
+                property_set("vendor.audio.headsetloopback", "1");  // PICO
+            }
+
         } break;
 
         // handle input device disconnection
@@ -356,6 +363,10 @@ status_t AudioPolicyManagerCustom::setDeviceConnectionStateInt(audio_devices_t d
             }
 
             ALOGV("setDeviceConnectionState() disconnecting input device %x", deviceType);
+
+            if (deviceType == AUDIO_DEVICE_IN_WIRED_HEADSET && ftmAudio) {
+                property_set("vendor.audio.headsetloopback", "0");  // PICO
+            }
 
             // Set Disconnect to HALs
             broadcastDeviceConnectionState(device, state);
