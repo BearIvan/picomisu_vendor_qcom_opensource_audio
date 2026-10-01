@@ -46,8 +46,8 @@
 #include <soundtrigger/SoundTrigger.h>
 #include "AudioPolicyManager.h"
 #include <policy.h>
-// PICO: audio event tracking (libaudioeventtracking.so), see PicoAudioEventTracker.h
-#include "PicoAudioEventTracker.h"
+// PICO: audio event tracking (libaudioeventtracking.so)
+#include <audioeventtracking/AudioEventTracker.h>
 
 namespace android {
 /*audio policy: workaround for truncated touch sounds*/
@@ -1136,7 +1136,8 @@ status_t AudioPolicyManagerCustom::stopSource(const sp<SwAudioOutputDescriptor>&
             selectOutputForMusicEffects();
         }
         // PICO: end of the playback started by AudioPolicyService (onPlaybackStarted)
-        pico::audioeventtracking::AudioEventTrackerBridge::onPlaybackEnded(client->portId());
+        pico::audioeventtracking::AudioEventTracker::getInstance()->onPlaybackEnded(
+                client->portId());
         return NO_ERROR;
     } else {
         ALOGW("stopOutput() refcount is already 0");
@@ -2143,7 +2144,7 @@ status_t AudioPolicyManagerCustom::startInput(audio_port_handle_t portId)
     event.stream = 0;   // capture: no stream type (0 in the factory event)
     event.config = client->config();
     event.flags = client->flags();
-    pico::audioeventtracking::AudioEventTrackerBridge::onCaptureStarted(event);
+    pico::audioeventtracking::AudioEventTracker::getInstance()->onCaptureStarted(event);
     return NO_ERROR;
 }
 
@@ -2190,7 +2191,8 @@ status_t AudioPolicyManagerCustom::stopInput(audio_port_handle_t portId)
     }
     // PICO: report the capture end to the audio event tracker
     if (status == NO_ERROR) {
-        pico::audioeventtracking::AudioEventTrackerBridge::onCaptureEnded(client->portId());
+        pico::audioeventtracking::AudioEventTracker::getInstance()->onCaptureEnded(
+                client->portId());
     }
     return status;
 }

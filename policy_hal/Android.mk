@@ -18,7 +18,8 @@ LOCAL_C_INCLUDES := $(TOPDIR)frameworks/av/services \
 
 LOCAL_HEADER_LIBRARIES := \
         libbase_headers \
-        libstagefright_foundation_headers
+        libstagefright_foundation_headers \
+        libaudioeventtracking_headers
 
 LOCAL_SHARED_LIBRARIES := \
     libcutils \
@@ -26,6 +27,9 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libsoundtrigger \
     libaudiopolicymanagerdefault
+
+# PICO: audio event tracking (factory libaudioeventtracking.so, 64-bit only).
+LOCAL_SHARED_LIBRARIES_arm64 := libaudioeventtracking
 
 LOCAL_STATIC_LIBRARIES := \
     libmedia_helper \
