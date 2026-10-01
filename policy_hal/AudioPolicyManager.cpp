@@ -1397,6 +1397,7 @@ status_t AudioPolicyManagerCustom::getOutputForAttr(const audio_attributes_t *at
                                                     audio_output_flags_t *flags,
                                                     audio_port_handle_t *selectedDeviceId,
                                                     audio_port_handle_t *portId,
+                                                    bool *isSpatialized,
                                                     std::vector<audio_io_handle_t> *secondaryOutputs)
 {
     audio_offload_info_t tOffloadInfo = AUDIO_INFO_INITIALIZER;
@@ -1427,6 +1428,7 @@ status_t AudioPolicyManagerCustom::getOutputForAttr(const audio_attributes_t *at
                                                 flags,
                                                 (audio_port_handle_t*)selectedDeviceId,
                                                 portId,
+                                                isSpatialized,
                                                 secondaryOutputs);
 }
 
@@ -1436,6 +1438,8 @@ audio_io_handle_t AudioPolicyManagerCustom::getOutputForDevices(
                 audio_stream_type_t stream,
                 const audio_config_t *config,
                 audio_output_flags_t *flags,
+                const audio_attributes_t *attr,
+                bool *isSpatialized,
                 bool forceMutingHaptic)
 {
     audio_io_handle_t output = AUDIO_IO_HANDLE_NONE;
@@ -1730,6 +1734,15 @@ audio_io_handle_t AudioPolicyManagerCustom::getOutputForDevices(
         audio_is_linear_pcm(config->format) &&
         isInCall()) {
         *flags = (audio_output_flags_t)AUDIO_OUTPUT_FLAG_INCALL_MUSIC;
+    }
+
+    // PICO: spatial audio backport (factory 0x21b5c): content that can be spatialized on
+    // these devices goes to the spatializer output.
+    *isSpatialized = false;
+    if (mSpatializerOutput != nullptr
+            && canBeSpatializedInt(attr, config, devices.types())) {
+        *isSpatialized = true;
+        return mSpatializerOutput->mIoHandle;
     }
 
     sp<IOProfile> profile;

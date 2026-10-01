@@ -156,12 +156,16 @@ protected:
 
 private:
         // internal method to return the output handle for the given device and format
+        // PICO: spatial audio backport, returns the spatializer output (and sets
+        // *isSpatialized) for the content that can be spatialized.
         audio_io_handle_t getOutputForDevices(
                 const DeviceVector &devices,
                 audio_session_t session,
                 audio_stream_type_t stream,
                 const audio_config_t *config,
                 audio_output_flags_t *flags,
+                const audio_attributes_t *attr,
+                bool *isSpatialized,
                 bool forceMutingHaptic = false);
 
         // internal method to fill offload info in case of Direct PCM
@@ -174,6 +178,7 @@ private:
                 audio_output_flags_t *flags,
                 audio_port_handle_t *selectedDeviceId,
                 audio_port_handle_t *portId,
+                bool *isSpatialized,
                 std::vector<audio_io_handle_t> *secondaryOutputs);
 
 
