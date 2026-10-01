@@ -26,10 +26,8 @@ LOCAL_SHARED_LIBRARIES := \
     libutils \
     liblog \
     libsoundtrigger \
-    libaudiopolicymanagerdefault
-
-# PICO: audio event tracking (factory libaudioeventtracking.so, 64-bit only).
-LOCAL_SHARED_LIBRARIES_arm64 := libaudioeventtracking
+    libaudiopolicymanagerdefault \
+    libaudioeventtracking
 
 LOCAL_STATIC_LIBRARIES := \
     libmedia_helper \
@@ -76,6 +74,10 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_AHAL_EXT)), true)
     LOCAL_SHARED_LIBRARIES += vendor.qti.hardware.audiohalext@1.0
     LOCAL_SHARED_LIBRARIES += vendor.qti.hardware.audiohalext-utils
 endif
+
+# PICO: audio server library, built like the frameworks/av audio policy libraries
+# (AUDIOSERVER_MULTILIB; 64 on this device as the factory image has no 32-bit copy).
+LOCAL_MULTILIB := $(AUDIOSERVER_MULTILIB)
 
 LOCAL_MODULE := libaudiopolicymanager
 
