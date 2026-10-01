@@ -46,6 +46,8 @@
 #include <soundtrigger/SoundTrigger.h>
 #include "AudioPolicyManager.h"
 #include <policy.h>
+// PICO: audio event tracking (libaudioeventtracking.so), see PicoAudioEventTracker.h
+#include "PicoAudioEventTracker.h"
 
 namespace android {
 /*audio policy: workaround for truncated touch sounds*/
@@ -1122,6 +1124,8 @@ status_t AudioPolicyManagerCustom::stopSource(const sp<SwAudioOutputDescriptor>&
         if (followsSameRouting(client->attributes(), attributes_initializer(AUDIO_USAGE_MEDIA))) {
             selectOutputForMusicEffects();
         }
+        // PICO: end of the playback started by AudioPolicyService (onPlaybackStarted)
+        pico::audioeventtracking::AudioEventTrackerBridge::onPlaybackEnded(client->portId());
         return NO_ERROR;
     } else {
         ALOGW("stopOutput() refcount is already 0");
@@ -2103,6 +2107,19 @@ status_t AudioPolicyManagerCustom::startInput(audio_port_handle_t portId)
 
     if (mApmConfigs->isRecPlayConcEnabled())
         mIsInputRequestOnProgress = false;
+
+    // PICO: report the capture start to the audio event tracker
+    pico::audioeventtracking::start_event_t event = {};
+    event.portId = client->portId();
+    event.io = input;
+    event.uid = client->uid();
+    sp<DeviceDescriptor> inputDevice = inputDesc->getDevice();
+    event.device = inputDevice != 0 ? inputDevice->type() : AUDIO_DEVICE_NONE;
+    event.attributes = client->attributes();
+    event.stream = 0;   // capture: no stream type (0 in the factory event)
+    event.config = client->config();
+    event.flags = client->flags();
+    pico::audioeventtracking::AudioEventTrackerBridge::onCaptureStarted(event);
     return NO_ERROR;
 }
 
@@ -2146,6 +2163,10 @@ status_t AudioPolicyManagerCustom::stopInput(audio_port_handle_t portId)
                 }
             }
         }
+    }
+    // PICO: report the capture end to the audio event tracker
+    if (status == NO_ERROR) {
+        pico::audioeventtracking::AudioEventTrackerBridge::onCaptureEnded(client->portId());
     }
     return status;
 }
